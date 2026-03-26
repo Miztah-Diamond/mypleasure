@@ -1,6 +1,16 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resend: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set. Email sending is disabled.')
+    }
+    resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resend
+}
 
 interface EmailOptions {
   to: string
@@ -10,7 +20,8 @@ interface EmailOptions {
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   try {
-    const { data, error } = await resend.emails.send({
+    const client = getResendClient()
+    const { data, error } = await client.emails.send({
       from: 'MP Wellness <orders@mypleasureltd.com>',
       to,
       subject,
