@@ -5,12 +5,14 @@ import Link from 'next/link'
 import { Search, ShoppingBag, Menu, ChevronDown } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
 import { MobileMenu } from './MobileMenu'
+import { SearchOverlay } from '@/components/shared/SearchOverlay'
 import { useCartStore } from '@/store/cart'
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const itemCount = useCartStore((state) => state.items.reduce((count, item) => count + item.quantity, 0))
   const { openCart } = useCartStore()
 
@@ -102,13 +104,13 @@ export function Header() {
 
             {/* Right side icons */}
             <div className="flex items-center gap-2">
-              <Link
-                href="/shop"
+              <button
+                onClick={() => setIsSearchOpen(true)}
                 className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
-              </Link>
+              </button>
               <button
                 onClick={openCart}
                 className="relative p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
@@ -127,6 +129,7 @@ export function Header() {
       </header>
 
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )
 }
