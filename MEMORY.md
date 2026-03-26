@@ -111,6 +111,45 @@
 | 2026-03-26 | **Task 5: SEO & Performance** — dynamic sitemap with product pages, JSON-LD structured data |
 | 2026-03-26 | Enhanced root layout metadata: metadataBase, Twitter card, googleBot directives |
 | 2026-03-26 | All 6 continuation tasks completed — site is production-ready pending API key config |
+| 2026-03-26 | Neon DATABASE_URL received and saved to .env.local — schema needs to be run via Neon SQL Editor |
+| 2026-03-27 | **Database schema deployed** — Injected schema.sql into Neon SQL Editor via browser automation (CodeMirror execCommand approach) |
+| 2026-03-27 | **32 products seeded** — Generated SQL INSERTs from seed.ts, split into 8 base64 chunks, injected into Neon SQL Editor (women: 16, men: 10, couples: 4, accessories: 2) |
+| 2026-03-27 | **All env vars added to Vercel** (8 total): DATABASE_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_SIGN_IN_URL, NEXT_PUBLIC_CLERK_SIGN_UP_URL, NEXT_PUBLIC_SITE_URL, ADMIN_EMAIL, BLOB_READ_WRITE_TOKEN |
+| 2026-03-27 | **Clerk sign-in/sign-up pages created** — Added `app/sign-in/[[...sign-in]]/page.tsx` and `app/sign-up/[[...sign-up]]/page.tsx` using Clerk's built-in components with brand-matching styles |
+| 2026-03-27 | **Stanley signed up as first Clerk user** (username: 001, email: codedcrystal@gmail.com) |
+| 2026-03-27 | **Vercel Blob store created** — Name: mypleasure-images, Region: Frankfurt (fra1, closest to Lagos), BLOB_READ_WRITE_TOKEN auto-added by Vercel |
+| 2026-03-27 | **Site fully live with real data** — Homepage loads products from Neon, shop shows all 32 products with ₦ prices, sign-in/sign-up working, admin dashboard accessible |
+| 2026-03-27 | **Multiple successful Vercel deployments** — All builds passing, no errors |
+
+## Key Decisions (continued)
+| Date | Decision | Reason |
+|------|----------|--------|
+| 2026-03-27 | Blob store region: Frankfurt (fra1) | Closest Vercel Blob region to Lagos, Nigeria for lowest latency |
+| 2026-03-27 | Clerk in development mode for now | Fine for building/testing; switch to production instance before real customer launch |
+| 2026-03-27 | Bulk .env paste for Vercel env vars | Used Vercel's auto-parse feature — paste KEY=VALUE lines into key input, auto-creates multiple rows |
+
+## Infrastructure Status (as of 2026-03-27)
+| Service | Status | Notes |
+|---------|--------|-------|
+| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded |
+| Clerk Auth | ✅ Live (dev mode) | Sign-in/sign-up pages working, 1 user registered |
+| Vercel Hosting | ✅ Live | mypleasure.vercel.app |
+| Vercel Blob | ✅ Ready | mypleasure-images store (Frankfurt), token configured |
+| Paystack | ❌ Not configured | Need test keys from dashboard.paystack.com |
+| Resend | ❌ Not configured | Need API key from resend.com |
+
+## Active Files (updated)
+| Path | What |
+|------|------|
+| app/sign-in/[[...sign-in]]/page.tsx | Clerk sign-in page (new) |
+| app/sign-up/[[...sign-up]]/page.tsx | Clerk sign-up page (new) |
+| app/admin/page.tsx | Admin dashboard — metrics, revenue chart, recent orders |
+| app/admin/products/page.tsx | Admin product list |
+| app/admin/products/new/page.tsx | Add new product |
+| app/admin/products/[id]/edit/page.tsx | Edit existing product |
+| app/admin/orders/page.tsx | Order management |
+| app/admin/orders/[id]/page.tsx | Individual order detail |
+| app/admin/settings/page.tsx | Store settings |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md
