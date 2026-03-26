@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPaystackSignature } from '@/lib/paystack'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getDb } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,16 +24,10 @@ export async function POST(request: NextRequest) {
       const orderNumber = metadata?.order_number
 
       if (orderNumber) {
-        const supabase = createAdminClient()
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            payment_status: 'paid',
-            payment_reference: reference,
-          })
-          .eq('order_number', orderNumber)
-
-        if (error) {
+        const sql = getDb()
+        try {
+          await sql`UPDATE orders SET payment_status = 'paid', payment_reference = ${reference} WHERE order_number = ${orderNumber}`
+        } catch (error) {
           console.error('Webhook update error:', error)
         }
       }

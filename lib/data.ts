@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getDb } from '@/lib/db'
 import type { Product } from '@/types'
 
 // Mock products for when Supabase isn't connected
@@ -76,40 +76,64 @@ export async function getProducts(options?: {
   sort?: string
 }): Promise<Product[]> {
   try {
-    const supabase = await createClient()
-    let query = supabase.from('products').select('*').eq('status', 'active')
+    const sql = getDb()
+    const cat = options?.category || null
+    const feat = options?.featured || null
+    const lim = options?.limit || 100
+    const sortBy = options?.sort || 'default'
 
-    if (options?.category) {
-      query = query.eq('category', options.category)
-    }
-    if (options?.featured) {
-      query = query.eq('featured', true)
-    }
-    if (options?.sort === 'price-asc') {
-      query = query.order('price', { ascending: true })
-    } else if (options?.sort === 'price-desc') {
-      query = query.order('price', { ascending: false })
-    } else if (options?.sort === 'newest') {
-      query = query.order('created_at', { ascending: false })
-    } else if (options?.sort === 'rating') {
-      query = query.order('rating', { ascending: false })
+    let rows: Product[]
+
+    if (sortBy === 'price-asc') {
+      rows = cat && feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} AND featured = true ORDER BY price ASC LIMIT ${lim}` as Product[]
+        : cat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} ORDER BY price ASC LIMIT ${lim}` as Product[]
+        : feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND featured = true ORDER BY price ASC LIMIT ${lim}` as Product[]
+        : await sql`SELECT * FROM products WHERE status = 'active' ORDER BY price ASC LIMIT ${lim}` as Product[]
+    } else if (sortBy === 'price-desc') {
+      rows = cat && feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} AND featured = true ORDER BY price DESC LIMIT ${lim}` as Product[]
+        : cat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} ORDER BY price DESC LIMIT ${lim}` as Product[]
+        : feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND featured = true ORDER BY price DESC LIMIT ${lim}` as Product[]
+        : await sql`SELECT * FROM products WHERE status = 'active' ORDER BY price DESC LIMIT ${lim}` as Product[]
+    } else if (sortBy === 'newest') {
+      rows = cat && feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} AND featured = true ORDER BY created_at DESC LIMIT ${lim}` as Product[]
+        : cat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} ORDER BY created_at DESC LIMIT ${lim}` as Product[]
+        : feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND featured = true ORDER BY created_at DESC LIMIT ${lim}` as Product[]
+        : await sql`SELECT * FROM products WHERE status = 'active' ORDER BY created_at DESC LIMIT ${lim}` as Product[]
+    } else if (sortBy === 'rating') {
+      rows = cat && feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} AND featured = true ORDER BY rating DESC LIMIT ${lim}` as Product[]
+        : cat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} ORDER BY rating DESC LIMIT ${lim}` as Product[]
+        : feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND featured = true ORDER BY rating DESC LIMIT ${lim}` as Product[]
+        : await sql`SELECT * FROM products WHERE status = 'active' ORDER BY rating DESC LIMIT ${lim}` as Product[]
     } else {
-      query = query.order('featured', { ascending: false }).order('created_at', { ascending: false })
-    }
-    if (options?.limit) {
-      query = query.limit(options.limit)
+      rows = cat && feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} AND featured = true ORDER BY featured DESC, created_at DESC LIMIT ${lim}` as Product[]
+        : cat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND category = ${cat} ORDER BY featured DESC, created_at DESC LIMIT ${lim}` as Product[]
+        : feat
+        ? await sql`SELECT * FROM products WHERE status = 'active' AND featured = true ORDER BY featured DESC, created_at DESC LIMIT ${lim}` as Product[]
+        : await sql`SELECT * FROM products WHERE status = 'active' ORDER BY featured DESC, created_at DESC LIMIT ${lim}` as Product[]
     }
 
-    const { data, error } = await query
-    if (error || !data || data.length === 0) {
-      // Fallback to mock data
+    if (!rows || rows.length === 0) {
       let filtered = [...mockProducts]
       if (options?.category) filtered = filtered.filter(p => p.category === options.category)
       if (options?.featured) filtered = filtered.filter(p => p.featured)
       if (options?.limit) filtered = filtered.slice(0, options.limit)
       return filtered
     }
-    return data as Product[]
+    return rows
   } catch {
     let filtered = [...mockProducts]
     if (options?.category) filtered = filtered.filter(p => p.category === options.category)
@@ -121,16 +145,13 @@ export async function getProducts(options?: {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-    if (error || !data) {
+    const sql = getDb()
+    const rows = await sql`SELECT * FROM products WHERE slug = ${slug} AND status = 'active'` as Product[]
+
+    if (!rows || rows.length === 0) {
       return mockProducts.find(p => p.slug === slug) || null
     }
-    return data as Product
+    return rows[0]
   } catch {
     return mockProducts.find(p => p.slug === slug) || null
   }
@@ -138,18 +159,13 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export async function getRelatedProducts(category: string, excludeId: string, limit = 4): Promise<Product[]> {
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('category', category)
-      .eq('status', 'active')
-      .neq('id', excludeId)
-      .limit(limit)
-    if (error || !data || data.length === 0) {
+    const sql = getDb()
+    const rows = await sql`SELECT * FROM products WHERE category = ${category} AND status = 'active' AND id != ${excludeId} LIMIT ${limit}` as Product[]
+
+    if (!rows || rows.length === 0) {
       return mockProducts.filter(p => p.category === category && p.id !== excludeId).slice(0, limit)
     }
-    return data as Product[]
+    return rows
   } catch {
     return mockProducts.filter(p => p.category === category && p.id !== excludeId).slice(0, limit)
   }

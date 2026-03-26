@@ -1,12 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
+import { neon } from '@neondatabase/serverless'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const sql = neon(process.env.DATABASE_URL!)
 
 function slugify(text: string): string {
   return text
@@ -781,20 +778,29 @@ async function seed() {
   console.log('🌱 Seeding database...')
 
   // Delete existing products
-  const { error: deleteError } = await supabase
-    .from('products')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
-
-  if (deleteError) console.error('Delete error:', deleteError)
+  try {
+    await sql`DELETE FROM products`
+    console.log('Cleared existing products')
+  } catch (err) {
+    console.error('Delete error:', err)
+  }
 
   // Insert products
   for (const product of products) {
-    const { error } = await supabase.from('products').insert(product)
-    if (error) {
-      console.error(`Error inserting ${product.name}:`, error)
-    } else {
+    try {
+      await sql`
+        INSERT INTO products (name, slug, category, subcategory, price, compare_price, description, features, material, details, images, badge, stock, featured, rating, review_count)
+        VALUES (
+          ${product.name}, ${product.slug}, ${product.category}, ${product.subcategory},
+          ${product.price}, ${product.compare_price}, ${product.description},
+          ${product.features}, ${product.material}, ${JSON.stringify(product.details)},
+          ${product.images}, ${product.badge}, ${product.stock},
+          ${product.featured}, ${product.rating}, ${product.review_count}
+        )
+      `
       console.log(`✅ ${product.name}`)
+    } catch (err) {
+      console.error(`Error inserting ${product.name}:`, err)
     }
   }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getDb } from '@/lib/db'
 import { sendEmail, formatOrderEmail } from '@/lib/email'
 import { generateOrderNumber } from '@/lib/utils'
 
@@ -13,19 +13,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('order_number', orderNumber)
-      .eq('customer_email', email)
-      .single()
+    const sql = getDb()
+    const rows = await sql`SELECT * FROM orders WHERE order_number = ${orderNumber} AND customer_email = ${email}`
 
-    if (error || !data) {
+    if (!rows || rows.length === 0) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(rows[0])
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -42,31 +37,15 @@ export async function POST(request: NextRequest) {
 
     const order_number = generateOrderNumber()
 
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        order_number,
-        customer_name,
-        customer_email,
-        customer_phone,
-        delivery_address,
-        delivery_method,
-        delivery_fee,
-        items,
-        subtotal,
-        total,
-        payment_reference,
-        payment_status: 'paid',
-        order_status: 'pending',
-      })
-      .select()
-      .single()
+    const sql = getDb()
+    const rows = await sql`INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_fee, items, subtotal, total, payment_reference, payment_status, order_status) VALUES (${order_number}, ${customer_name}, ${customer_email}, ${customer_phone}, ${JSON.stringify(delivery_address)}, ${delivery_method}, ${delivery_fee}, ${JSON.stringify(items)}, ${subtotal}, ${total}, ${payment_reference}, 'paid', 'pending') RETURNING *`
 
-    if (error) {
-      console.error('Order creation error:', error)
+    if (!rows || rows.length === 0) {
+      console.error('Order creation failed: no rows returned')
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }
+
+    const data = rows[0]
 
     // Send order confirmation email to customer
     try {

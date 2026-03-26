@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X } from 'lucide-react'
+import { UserButton } from '@clerk/nextjs'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -68,7 +69,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
 
           {/* Footer */}
-          <div className="p-3 border-t border-cream/10">
+          <div className="p-3 border-t border-cream/10 space-y-2">
+            <div className="flex items-center justify-center">
+              <UserButton />
+            </div>
             <Link
               href="/"
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-cream/50 hover:text-cream hover:bg-cream/5 transition-all"
@@ -92,10 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gold/10 rounded-full flex items-center justify-center">
-              <span className="text-xs font-semibold text-gold">A</span>
-            </div>
-            <span className="text-sm text-chocolate hidden sm:block">Admin</span>
+            <UserButton />
           </div>
         </header>
 
