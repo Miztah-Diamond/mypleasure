@@ -50,8 +50,33 @@ export default async function ProductPage({ params }: ProductPageProps) {
     { icon: Heart, label: 'Waterproof' },
   ]
 
+  // JSON-LD structured data for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || '',
+    image: product.images,
+    sku: product.slug,
+    brand: { '@type': 'Brand', name: 'MP Wellness' },
+    offers: {
+      '@type': 'Offer',
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mypleasure.vercel.app'}/product/${product.slug}`,
+      priceCurrency: 'NGN',
+      price: (product.price / 100).toFixed(2),
+      availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: 'MP Wellness' },
+    },
+    aggregateRating: product.review_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      reviewCount: product.review_count,
+    } : undefined,
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 py-8 lg:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-warm-gray mb-8">
         <Link href="/" className="hover:text-gold transition-colors">
