@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from 'react'
-import { Save } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Save, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,24 +9,85 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
 export default function AdminSettingsPage() {
-  const [storeName, setStoreName] = useState('My Pleasure LTD')
-  const [contactEmail, setContactEmail] = useState('hello@mypleasureltd.com')
-  const [whatsapp, setWhatsapp] = useState('+2348000000000')
-  const [announcement, setAnnouncement] = useState('🚚 Free discreet delivery on orders over ₦15,000 | 📦 100% unmarked packaging')
-  const [freeThreshold, setFreeThreshold] = useState('15000')
-  const [lagosDelivery, setLagosDelivery] = useState('1500')
-  const [citiesDelivery, setCitiesDelivery] = useState('2000')
-  const [nationwideDelivery, setNationwideDelivery] = useState('2500')
-  const [instagram, setInstagram] = useState('https://instagram.com/mypleasureltd')
-  const [twitter, setTwitter] = useState('https://x.com/mypleasureltd')
+  const [loading, setLoading] = useState(true)
+  const [storeName, setStoreName] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [announcement, setAnnouncement] = useState('')
+  const [freeThreshold, setFreeThreshold] = useState('')
+  const [lagosDelivery, setLagosDelivery] = useState('')
+  const [citiesDelivery, setCitiesDelivery] = useState('')
+  const [nationwideDelivery, setNationwideDelivery] = useState('')
+  const [instagram, setInstagram] = useState('')
+  const [twitter, setTwitter] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const handleSave = () => {
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/settings')
+        if (res.ok) {
+          const data = await res.json()
+          setStoreName(data.store_name || '')
+          setContactEmail(data.contact_email || '')
+          setWhatsapp(data.whatsapp_number || '')
+          setAnnouncement(data.announcement_text || '')
+          setFreeThreshold(String((data.free_delivery_threshold || 0) / 100))
+          const fees = data.delivery_fees || {}
+          setLagosDelivery(String((fees.lagos || 0) / 100))
+          setCitiesDelivery(String((fees.major_cities || 0) / 100))
+          setNationwideDelivery(String((fees.nationwide || 0) / 100))
+          const social = data.social_links || {}
+          setInstagram(social.instagram || '')
+          setTwitter(social.twitter || '')
+        }
+      } catch {
+        // Use defaults already set
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const handleSave = async () => {
     setSaving(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          store_name: storeName,
+          contact_email: contactEmail,
+          whatsapp_number: whatsapp,
+          announcement_text: announcement,
+          free_delivery_threshold: Math.round(Number(freeThreshold) * 100),
+          delivery_fees: {
+            lagos: Math.round(Number(lagosDelivery) * 100),
+            major_cities: Math.round(Number(citiesDelivery) * 100),
+            nationwide: Math.round(Number(nationwideDelivery) * 100),
+          },
+          social_links: {
+            instagram: instagram || undefined,
+            twitter: twitter || undefined,
+          },
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
       toast.success('Settings saved successfully!')
+    } catch {
+      toast.error('Failed to save settings')
+    } finally {
       setSaving(false)
-    }, 1000)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+      </div>
+    )
   }
 
   return (
@@ -77,6 +138,7 @@ export default function AdminSettingsPage() {
             <div>
               <Label>Free Delivery Threshold (₦)</Label>
               <Input type="number" value={freeThreshold} onChange={(e) => setFreeThreshold(e.target.value)} className="mt-1.5" />
+              <p className="text-[11px] text-warm-gray mt-1">Orders above this amount get free delivery</p>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -101,11 +163,11 @@ export default function AdminSettingsPage() {
           <div className="space-y-4">
             <div>
               <Label>Instagram URL</Label>
-              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} className="mt-1.5" />
+              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} className="mt-1.5" placeholder="https://instagram.com/mypleasureltd" />
             </div>
             <div>
               <Label>Twitter / X URL</Label>
-              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} className="mt-1.5" />
+              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} className="mt-1.5" placeholder="https://x.com/mypleasureltd" />
             </div>
           </div>
         </div>
