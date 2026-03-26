@@ -76,6 +76,13 @@
 | 2026-03-26 | Fixed Vercel deploy: .npmrc + lazy Resend init |
 | 2026-03-26 | Site live at mypleasure.vercel.app |
 | 2026-03-26 | Started migration: Supabase → Neon + Clerk |
+| 2026-03-26 | Migration complete: removed @supabase/ssr, @supabase/supabase-js; added @neondatabase/serverless, @clerk/nextjs |
+| 2026-03-26 | Created Clerk middleware for /admin route protection |
+| 2026-03-26 | Updated all API routes (orders, webhooks) to Neon SQL |
+| 2026-03-26 | Updated seed script for Neon |
+| 2026-03-26 | Build verified — all 25+ routes compiled |
+| 2026-03-26 | Pushed to GitHub and Vercel deployed successfully |
+| 2026-03-26 | Created MEMORY.md, docs/DECISIONS.md, memory/ directory |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md
