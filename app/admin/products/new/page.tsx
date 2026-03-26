@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Upload, X, Plus, Save } from 'lucide-react'
+import { ArrowLeft, X, Plus, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { ImageUploader } from '@/components/admin/ImageUploader'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -32,6 +33,7 @@ export default function NewProductPage() {
   const [howToUse, setHowToUse] = useState('')
   const [howToClean, setHowToClean] = useState('')
   const [whatsInBox, setWhatsInBox] = useState('')
+  const [images, setImages] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   const generateSlug = (text: string) => {
@@ -52,13 +54,56 @@ export default function NewProductPage() {
   }
 
   const handleSave = async () => {
+    // Validate required fields
+    if (!name.trim()) { toast.error('Product name is required'); return }
+    if (!category) { toast.error('Category is required'); return }
+    if (!price || Number(price) <= 0) { toast.error('Valid price is required'); return }
+
     setSaving(true)
-    // In production, save to Supabase
-    setTimeout(() => {
-      toast.success('Product saved successfully!')
-      setSaving(false)
+    try {
+      const body = {
+        name: name.trim(),
+        slug: slug || generateSlug(name),
+        category,
+        subcategory: subcategory || null,
+        price: Math.round(Number(price) * 100), // Convert Naira to kobo
+        compare_price: comparePrice ? Math.round(Number(comparePrice) * 100) : null,
+        description: description || null,
+        features: features.filter(f => f.trim()),
+        material: material || null,
+        details: {
+          dimensions: dimensions || undefined,
+          howToUse: howToUse || undefined,
+          howToClean: howToClean || undefined,
+          whatsInBox: whatsInBox || undefined,
+        },
+        images,
+        badge: badge || null,
+        stock: Number(stock) || 0,
+        status,
+        featured,
+        rating: Number(rating) || 0,
+        review_count: Number(reviewCount) || 0,
+      }
+
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to save product')
+      }
+
+      toast.success('Product created successfully!')
       router.push('/admin/products')
-    }, 1000)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save product')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -110,6 +155,13 @@ export default function NewProductPage() {
             </div>
           </div>
 
+          {/* Images */}
+          <div className="bg-white rounded-2xl border border-beige/50 p-6">
+            <h2 className="font-medium text-wine mb-4">Images</h2>
+            <ImageUploader images={images} onChange={setImages} maxImages={5} maxSizeMB={5} />
+            <p className="text-xs text-warm-gray mt-3">First image is the primary display image. Drag to reorder.</p>
+          </div>
+
           {/* Pricing */}
           <div className="bg-white rounded-2xl border border-beige/50 p-6">
             <h2 className="font-medium text-wine mb-4">Pricing</h2>
@@ -117,7 +169,7 @@ export default function NewProductPage() {
               <div>
                 <Label>Price (₦) *</Label>
                 <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1.5" placeholder="7000" />
-                <p className="text-[11px] text-warm-gray mt-1">Enter in Naira, stored as kobo</p>
+                <p className="text-[11px] text-warm-gray mt-1">Enter in Naira (auto-converts to kobo)</p>
               </div>
               <div>
                 <Label>Compare-at Price (₦)</Label>
@@ -170,19 +222,6 @@ export default function NewProductPage() {
                 <Label>What&apos;s in the Box</Label>
                 <Textarea value={whatsInBox} onChange={(e) => setWhatsInBox(e.target.value)} className="mt-1.5" rows={2} />
               </div>
-            </div>
-          </div>
-
-          {/* Images */}
-          <div className="bg-white rounded-2xl border border-beige/50 p-6">
-            <h2 className="font-medium text-wine mb-4">Images</h2>
-            <div className="border-2 border-dashed border-beige rounded-xl p-8 text-center hover:border-gold/50 transition-colors cursor-pointer">
-              <Upload className="h-10 w-10 text-warm-gray mx-auto mb-3" />
-              <p className="text-sm text-chocolate font-medium">Click to upload or drag and drop</p>
-              <p className="text-xs text-warm-gray mt-1">PNG, JPG up to 5MB • Max 5 images</p>
-              <p className="text-xs text-warm-gray mt-3 bg-cream rounded-lg p-2">
-                Image upload requires Supabase Storage connection. Configure your .env.local file.
-              </p>
             </div>
           </div>
         </div>

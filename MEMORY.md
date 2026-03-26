@@ -26,6 +26,7 @@
 | 2026-03-26 | Used --legacy-peer-deps | react-paystack peer conflict with React 19 |
 | 2026-03-26 | Lazy-init Resend client | Prevents build-time crash when RESEND_API_KEY isn't set |
 | 2026-03-26 | Mock data fallback pattern | Site works without DB connection for development/preview |
+| 2026-03-26 | Chose Vercel Blob for images | Native Vercel integration, no extra config, CDN-backed, generous free tier |
 
 ## Terms
 | Term | Meaning |
@@ -47,7 +48,7 @@
 | Forms | React Hook Form + Zod | Checkout validation |
 | Charts | Recharts | Admin dashboard revenue charts |
 | UI | shadcn/ui + CVA | Custom themed components |
-| Images | Uploadthing or Vercel Blob | Pending — product image uploads |
+| Images | Vercel Blob | Implemented — upload API + ImageUploader component |
 
 ## Active Files (Hot Reference)
 | Path | What |
@@ -57,6 +58,10 @@
 | lib/email.ts | Resend email (lazy-init pattern) |
 | lib/paystack.ts | Paystack verification |
 | store/cart.ts | Zustand cart store |
+| app/api/upload/route.ts | Vercel Blob image upload (POST/DELETE) |
+| app/api/products/route.ts | Product CRUD list/create (GET/POST) |
+| app/api/products/[id]/route.ts | Product CRUD read/update/delete (GET/PUT/DELETE) |
+| components/admin/ImageUploader.tsx | Drag-drop image uploader with reorder |
 | scripts/schema.sql | PostgreSQL schema |
 | scripts/seed.ts | 32-product seed script |
 
@@ -83,6 +88,13 @@
 | 2026-03-26 | Build verified — all 25+ routes compiled |
 | 2026-03-26 | Pushed to GitHub and Vercel deployed successfully |
 | 2026-03-26 | Created MEMORY.md, docs/DECISIONS.md, memory/ directory |
+| 2026-03-26 | Fixed MIDDLEWARE_INVOCATION_FAILED — Clerk components now gracefully degrade without keys |
+| 2026-03-26 | Added dynamic imports for all Clerk components (SignIn, UserButton) to prevent SSR crashes |
+| 2026-03-26 | **Task 1: Product Image System** — installed @vercel/blob, created /api/upload (POST/DELETE), ImageUploader component with drag-drop + reorder |
+| 2026-03-26 | Created full Product CRUD API: /api/products (GET/POST), /api/products/[id] (GET/PUT/DELETE) |
+| 2026-03-26 | Rewrote admin products: list page fetches from API, new/edit pages use ImageUploader + real API saves |
+| 2026-03-26 | Updated next.config.ts with Vercel Blob remote pattern (*.public.blob.vercel-storage.com) |
+| 2026-03-26 | Added BLOB_READ_WRITE_TOKEN to .env.example |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md
