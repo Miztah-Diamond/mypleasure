@@ -1,0 +1,90 @@
+"use client"
+
+import Link from 'next/link'
+import { X, ChevronRight } from 'lucide-react'
+
+interface MobileMenuProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+  if (!isOpen) return null
+
+  const menuItems = [
+    { href: '/shop', label: 'All Products' },
+    { href: '/shop?category=women', label: 'For Her' },
+    { href: '/shop?category=men', label: 'For Him' },
+    { href: '/shop?category=couples', label: 'Couples' },
+    { href: '/shop?category=accessories', label: 'Accessories' },
+  ]
+
+  const secondaryItems = [
+    { href: '/about', label: 'About Us' },
+    { href: '/contact', label: 'Contact' },
+    { href: '/faq', label: 'FAQ' },
+    { href: '/track', label: 'Track Order' },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div className="fixed inset-0 bg-wine/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-y-0 left-0 w-[85%] max-w-sm bg-white shadow-2xl animate-slide-in-right">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-beige">
+            <span className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-wine">MP</span>
+            <button
+              onClick={onClose}
+              className="p-2 text-warm-gray hover:text-chocolate transition-colors rounded-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto py-4">
+            <div className="px-4 mb-2">
+              <span className="text-[11px] uppercase tracking-[2px] text-warm-gray font-medium">Shop</span>
+            </div>
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className="flex items-center justify-between px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
+              >
+                <span className="font-medium">{item.label}</span>
+                <ChevronRight className="h-4 w-4 text-warm-gray" />
+              </Link>
+            ))}
+
+            <div className="border-t border-beige my-4" />
+
+            <div className="px-4 mb-2">
+              <span className="text-[11px] uppercase tracking-[2px] text-warm-gray font-medium">Help</span>
+            </div>
+            {secondaryItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className="flex items-center justify-between px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
+              >
+                <span>{item.label}</span>
+                <ChevronRight className="h-4 w-4 text-warm-gray" />
+              </Link>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-beige bg-cream">
+            <p className="text-xs text-warm-gray text-center">
+              100% Discreet • Body-Safe • Secure Payment
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
