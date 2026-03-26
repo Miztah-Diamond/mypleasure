@@ -27,6 +27,8 @@
 | 2026-03-26 | Lazy-init Resend client | Prevents build-time crash when RESEND_API_KEY isn't set |
 | 2026-03-26 | Mock data fallback pattern | Site works without DB connection for development/preview |
 | 2026-03-26 | Chose Vercel Blob for images | Native Vercel integration, no extra config, CDN-backed, generous free tier |
+| 2026-03-26 | Replaced react-paystack with @paystack/inline-js | Better React 19 compatibility, no peer dep issues |
+| 2026-03-26 | Admin APIs under /api/admin/* | Separate admin endpoints from public API for future auth middleware |
 
 ## Terms
 | Term | Meaning |
@@ -95,6 +97,20 @@
 | 2026-03-26 | Rewrote admin products: list page fetches from API, new/edit pages use ImageUploader + real API saves |
 | 2026-03-26 | Updated next.config.ts with Vercel Blob remote pattern (*.public.blob.vercel-storage.com) |
 | 2026-03-26 | Added BLOB_READ_WRITE_TOKEN to .env.example |
+| 2026-03-26 | **Task 2: Admin Dashboard Polish** — real-time metrics API, order management APIs, settings CRUD API |
+| 2026-03-26 | Dashboard now shows live data: today's orders/revenue, product count, pending orders, weekly revenue chart |
+| 2026-03-26 | Orders page: API-driven with status filters, search, CSV export |
+| 2026-03-26 | Order detail page: loads real data, status updates via API |
+| 2026-03-26 | Settings page: loads/saves to DB with upsert pattern |
+| 2026-03-26 | **Task 3: Complete Order Flow** — replaced react-paystack with @paystack/inline-js |
+| 2026-03-26 | Checkout now creates real orders via /api/orders after Paystack payment |
+| 2026-03-26 | Graceful fallback to test mode when Paystack keys not configured |
+| 2026-03-26 | **Task 4: UX Polish** — search overlay with live product search, quick suggestions |
+| 2026-03-26 | Created /api/search route with ILIKE text search |
+| 2026-03-26 | Header search icon opens SearchOverlay instead of linking to /shop |
+| 2026-03-26 | **Task 5: SEO & Performance** — dynamic sitemap with product pages, JSON-LD structured data |
+| 2026-03-26 | Enhanced root layout metadata: metadataBase, Twitter card, googleBot directives |
+| 2026-03-26 | All 6 continuation tasks completed — site is production-ready pending API key config |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md
