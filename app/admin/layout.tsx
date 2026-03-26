@@ -3,9 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X } from 'lucide-react'
-import { UserButton } from '@clerk/nextjs'
 import { cn } from '@/lib/utils'
+
+const ClerkUserButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+  { ssr: false, loading: () => null }
+)
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +18,19 @@ const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
+
+const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+function AdminAvatar() {
+  if (clerkEnabled) {
+    return <ClerkUserButton />
+  }
+  return (
+    <div className="w-8 h-8 bg-gold/10 rounded-full flex items-center justify-center">
+      <span className="text-xs font-semibold text-gold">A</span>
+    </div>
+  )
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -71,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Footer */}
           <div className="p-3 border-t border-cream/10 space-y-2">
             <div className="flex items-center justify-center">
-              <UserButton />
+              <AdminAvatar />
             </div>
             <Link
               href="/"
@@ -96,7 +114,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <UserButton />
+            <AdminAvatar />
+            <span className="text-sm text-chocolate hidden sm:block">Admin</span>
           </div>
         </header>
 
