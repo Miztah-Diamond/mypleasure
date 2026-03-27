@@ -120,6 +120,12 @@
 | 2026-03-27 | **Vercel Blob store created** — Name: mypleasure-images, Region: Frankfurt (fra1, closest to Lagos), BLOB_READ_WRITE_TOKEN auto-added by Vercel |
 | 2026-03-27 | **Site fully live with real data** — Homepage loads products from Neon, shop shows all 32 products with ₦ prices, sign-in/sign-up working, admin dashboard accessible |
 | 2026-03-27 | **Multiple successful Vercel deployments** — All builds passing, no errors |
+| 2026-03-27 | **Product images added** — Sourced 32 free-to-use images from Pexels, updated all products in Neon DB |
+| 2026-03-27 | **Fixed 5 broken Pexels image IDs** — Replaced invalid photo IDs (11667789, 5187255, 6763674, 5187485, 6768982) with working alternatives from Pexels beauty/wellness search |
+| 2026-03-27 | **All 32/32 product images verified** — Every product image loads correctly on live shop page |
+| 2026-03-27 | **Added images.pexels.com to next.config.ts remotePatterns** — Required for Next.js Image component to optimize external Pexels images |
+| 2026-03-27 | **Sign-in/sign-out added to customer header** — User icon links to /sign-in; Clerk UserButton replaces it when signed in; mobile menu has Account section with Sign In/Sign Out |
+| 2026-03-27 | **Smart inventory management deployed** — Stock decrements on purchase, out-of-stock overlay on product cards, disabled add-to-cart when stock=0, qty capped at stock level, checkout validates stock before order creation (409 if OOS) |
 
 ## Key Decisions (continued)
 | Date | Decision | Reason |
@@ -127,28 +133,39 @@
 | 2026-03-27 | Blob store region: Frankfurt (fra1) | Closest Vercel Blob region to Lagos, Nigeria for lowest latency |
 | 2026-03-27 | Clerk in development mode for now | Fine for building/testing; switch to production instance before real customer launch |
 | 2026-03-27 | Bulk .env paste for Vercel env vars | Used Vercel's auto-parse feature — paste KEY=VALUE lines into key input, auto-creates multiple rows |
+| 2026-03-27 | Pexels for product images | Free commercial use, no attribution required, high-quality stock photos |
+| 2026-03-27 | Direct Pexels URLs (not Vercel Blob) for initial images | Faster setup; can migrate to Blob later when admin uploads real product photos |
+| 2026-03-27 | Clerk v7 dynamic import pattern: `dynamic(() => import('@clerk/nextjs').then(mod => mod.Component))` | v7 removed SignedIn/SignedOut wrapper components; use `process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` check + DOM detection for auth state |
+| 2026-03-27 | Stock validation at API level (409 response) | Prevents overselling even if client-side checks are bypassed |
+| 2026-03-27 | `GREATEST(stock - qty, 0)` for stock decrement | Prevents negative stock values in database |
 
 ## Infrastructure Status (as of 2026-03-27)
 | Service | Status | Notes |
 |---------|--------|-------|
-| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded |
-| Clerk Auth | ✅ Live (dev mode) | Sign-in/sign-up pages working, 1 user registered |
+| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded, stock management active |
+| Clerk Auth | ✅ Live (dev mode) | Sign-in/sign-up pages + header auth UI working, 1 user registered |
 | Vercel Hosting | ✅ Live | mypleasure.vercel.app |
 | Vercel Blob | ✅ Ready | mypleasure-images store (Frankfurt), token configured |
+| Inventory System | ✅ Live | Auto-decrement on purchase, OOS display, qty caps, checkout validation |
 | Paystack | ❌ Not configured | Need test keys from dashboard.paystack.com |
 | Resend | ❌ Not configured | Need API key from resend.com |
 
 ## Active Files (updated)
 | Path | What |
 |------|------|
-| app/sign-in/[[...sign-in]]/page.tsx | Clerk sign-in page (new) |
-| app/sign-up/[[...sign-up]]/page.tsx | Clerk sign-up page (new) |
+| app/sign-in/[[...sign-in]]/page.tsx | Clerk sign-in page |
+| app/sign-up/[[...sign-up]]/page.tsx | Clerk sign-up page |
+| components/layout/Header.tsx | Customer header with auth (Sign In icon / Clerk UserButton) |
+| components/layout/MobileMenu.tsx | Mobile menu with Account section (Sign In / Sign Out) |
+| components/products/ProductCard.tsx | Product card with out-of-stock overlay + disabled button |
+| app/product/[slug]/ProductActions.tsx | Product detail actions with stock-aware qty selector + OOS alert |
+| store/cart.ts | Zustand cart with stock-capped addItem/updateQuantity |
+| components/cart/CartSidebar.tsx | Cart sidebar with stock-limited qty buttons |
+| app/api/orders/route.ts | Order API with pre-order stock validation + post-order stock decrement |
 | app/admin/page.tsx | Admin dashboard — metrics, revenue chart, recent orders |
 | app/admin/products/page.tsx | Admin product list |
-| app/admin/products/new/page.tsx | Add new product |
-| app/admin/products/[id]/edit/page.tsx | Edit existing product |
+| app/admin/products/[id]/edit/page.tsx | Edit product (including stock field) |
 | app/admin/orders/page.tsx | Order management |
-| app/admin/orders/[id]/page.tsx | Individual order detail |
 | app/admin/settings/page.tsx | Store settings |
 
 → Full decision log: docs/DECISIONS.md
