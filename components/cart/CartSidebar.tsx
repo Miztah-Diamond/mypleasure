@@ -68,7 +68,8 @@ export function CartSidebar() {
                       <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        className="p-1 rounded-lg border border-beige hover:bg-beige/50 transition-colors"
+                        className="p-1 rounded-lg border border-beige hover:bg-beige/50 transition-colors disabled:opacity-30"
+                        disabled={item.quantity >= (item.product.stock || 999)}
                       >
                         <Plus className="h-3 w-3" />
                       </button>

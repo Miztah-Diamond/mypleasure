@@ -24,22 +24,27 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
 
       addItem: (product: Product, quantity = 1) => {
+        // Block out-of-stock items
+        if (product.stock <= 0) return
+
         set((state) => {
           const existingItem = state.items.find(
             (item) => item.product.id === product.id
           )
           if (existingItem) {
+            // Cap at available stock
+            const newQty = Math.min(existingItem.quantity + quantity, product.stock)
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: newQty }
                   : item
               ),
               isOpen: true,
             }
           }
           return {
-            items: [...state.items, { product, quantity }],
+            items: [...state.items, { product, quantity: Math.min(quantity, product.stock) }],
             isOpen: true,
           }
         })
@@ -57,9 +62,14 @@ export const useCartStore = create<CartState>()(
           return
         }
         set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
+          items: state.items.map((item) => {
+            if (item.product.id === productId) {
+              // Cap at available stock
+              const maxQty = item.product.stock || 999
+              return { ...item, quantity: Math.min(quantity, maxQty) }
+            }
+            return item
+          }),
         }))
       },
 

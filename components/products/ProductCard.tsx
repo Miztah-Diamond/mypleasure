@@ -17,9 +17,15 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
 
+  const isOutOfStock = product.stock <= 0
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (isOutOfStock) {
+      toast.error('This item is currently out of stock')
+      return
+    }
     addItem(product, 1)
     toast.success(`${product.name} added to cart`)
   }
@@ -43,7 +49,14 @@ export function ProductCard({ product }: ProductCardProps) {
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
-          {product.badge && (
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+              <span className="bg-white/90 text-wine text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full">
+                Out of Stock
+              </span>
+            </div>
+          )}
+          {product.badge && !isOutOfStock && (
             <div className="absolute top-3 left-3">
               <Badge variant={product.badge as 'bestseller' | 'new' | 'sale'}>
                 {product.badge}
@@ -100,9 +113,10 @@ export function ProductCard({ product }: ProductCardProps) {
           variant="outline"
           size="sm"
           className="w-full gap-2"
+          disabled={isOutOfStock}
         >
           <ShoppingBag className="h-4 w-4" />
-          Add to Cart
+          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
         </Button>
       </div>
     </div>

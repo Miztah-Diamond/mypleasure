@@ -35,14 +35,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const sql = getDb()
+
+    // Validate stock availability before creating order
+    const outOfStock: string[] = []
+    for (const item of items) {
+      if (item.product_id) {
+        const stockCheck = await sql`SELECT name, stock FROM products WHERE id = ${item.product_id}`
+        if (stockCheck.length > 0) {
+          const product = stockCheck[0]
+          if (product.stock < item.quantity) {
+            outOfStock.push(`${product.name} (only ${product.stock} left)`)
+          }
+        }
+      }
+    }
+
+    if (outOfStock.length > 0) {
+      return NextResponse.json(
+        { error: 'Some items are out of stock', outOfStock },
+        { status: 409 }
+      )
+    }
+
     const order_number = generateOrderNumber()
 
-    const sql = getDb()
     const rows = await sql`INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_fee, items, subtotal, total, payment_reference, payment_status, order_status) VALUES (${order_number}, ${customer_name}, ${customer_email}, ${customer_phone}, ${JSON.stringify(delivery_address)}, ${delivery_method}, ${delivery_fee}, ${JSON.stringify(items)}, ${subtotal}, ${total}, ${payment_reference}, 'paid', 'pending') RETURNING *`
 
     if (!rows || rows.length === 0) {
       console.error('Order creation failed: no rows returned')
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+    }
+
+    // Decrement stock for each purchased item
+    for (const item of items) {
+      if (item.product_id) {
+        await sql`UPDATE products SET stock = GREATEST(stock - ${item.quantity}, 0) WHERE id = ${item.product_id}`
+      }
     }
 
     const data = rows[0]
