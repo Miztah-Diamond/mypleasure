@@ -126,6 +126,7 @@
 | 2026-03-27 | **Added images.pexels.com to next.config.ts remotePatterns** — Required for Next.js Image component to optimize external Pexels images |
 | 2026-03-27 | **Sign-in/sign-out added to customer header** — User icon links to /sign-in; Clerk UserButton replaces it when signed in; mobile menu has Account section with Sign In/Sign Out |
 | 2026-03-27 | **Smart inventory management deployed** — Stock decrements on purchase, out-of-stock overlay on product cards, disabled add-to-cart when stock=0, qty capped at stock level, checkout validates stock before order creation (409 if OOS) |
+| 2026-03-27 | **Product request system built** — /request page with optional form, "Request Restock" on OOS products, admin /admin/requests tab with status tracking (new→reviewed→sourcing→fulfilled/declined), email notification to admin, links in footer + mobile menu |
 
 ## Key Decisions (continued)
 | Date | Decision | Reason |
@@ -138,11 +139,14 @@
 | 2026-03-27 | Clerk v7 dynamic import pattern: `dynamic(() => import('@clerk/nextjs').then(mod => mod.Component))` | v7 removed SignedIn/SignedOut wrapper components; use `process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` check + DOM detection for auth state |
 | 2026-03-27 | Stock validation at API level (409 response) | Prevents overselling even if client-side checks are bypassed |
 | 2026-03-27 | `GREATEST(stock - qty, 0)` for stock decrement | Prevents negative stock values in database |
+| 2026-03-27 | All request form fields optional | Lower friction — anonymous requests OK, contact info only needed if they want updates |
+| 2026-03-27 | Suspense wrapper for /request page | `useSearchParams()` requires Suspense boundary in Next.js 15 App Router |
+| 2026-03-27 | Admin requests: inline detail panel (not separate page) | Faster workflow — click row to see details + update status without page navigation |
 
 ## Infrastructure Status (as of 2026-03-27)
 | Service | Status | Notes |
 |---------|--------|-------|
-| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded, stock management active |
+| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded, stock management active, product_requests table live |
 | Clerk Auth | ✅ Live (dev mode) | Sign-in/sign-up pages + header auth UI working, 1 user registered |
 | Vercel Hosting | ✅ Live | mypleasure.vercel.app |
 | Vercel Blob | ✅ Ready | mypleasure-images store (Frankfurt), token configured |
@@ -167,6 +171,10 @@
 | app/admin/products/[id]/edit/page.tsx | Edit product (including stock field) |
 | app/admin/orders/page.tsx | Order management |
 | app/admin/settings/page.tsx | Store settings |
+| app/request/page.tsx | Customer product request form (Suspense-wrapped) |
+| app/api/requests/route.ts | Public POST for product requests + admin email notification |
+| app/api/admin/requests/route.ts | Admin GET (list/filter) + PUT (status/notes update) |
+| app/admin/requests/page.tsx | Admin requests management with inline detail panel |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md
