@@ -9,35 +9,41 @@ import { MobileMenu } from './MobileMenu'
 import { SearchOverlay } from '@/components/shared/SearchOverlay'
 import { useCartStore } from '@/store/cart'
 
-// Dynamic imports for Clerk components (Clerk v7 exports)
-const UserButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.UserButton })), { ssr: false })
-const SignInButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignInButton })), { ssr: false })
+// Dynamic Clerk imports — same pattern as admin layout
+const ClerkUserButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+  { ssr: false, loading: () => null }
+)
 
-// Auth hook — wrapped in try/catch so the site works even without Clerk keys
-function useAuthSafe() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { useAuth } = require('@clerk/nextjs')
-    return useAuth()
-  } catch {
-    return { isSignedIn: false, isLoaded: false }
-  }
-}
+const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [clerkLoaded, setClerkLoaded] = useState(false)
   const itemCount = useCartStore((state) => state.items.reduce((count, item) => count + item.quantity, 0))
   const { openCart } = useCartStore()
-  const auth = useAuthSafe()
 
   useEffect(() => {
-    setMounted(true)
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handleScroll)
+
+    // Check when Clerk loads and user is signed in (UserButton will render)
+    if (clerkEnabled) {
+      const checkClerk = setInterval(() => {
+        const clerkBtn = document.querySelector('.cl-userButtonTrigger')
+        if (clerkBtn) {
+          setClerkLoaded(true)
+          clearInterval(checkClerk)
+        }
+      }, 500)
+      // Stop checking after 5s
+      setTimeout(() => clearInterval(checkClerk), 5000)
+      return () => { clearInterval(checkClerk); window.removeEventListener('scroll', handleScroll) }
+    }
+
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -131,27 +137,37 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </button>
 
-              {/* Auth: Sign In / User Button */}
-              {mounted && auth.isLoaded && !auth.isSignedIn && (
-                <SignInButton mode="modal">
-                  <button
-                    className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
-                    aria-label="Sign in"
-                  >
-                    <User className="h-5 w-5" />
-                  </button>
-                </SignInButton>
+              {/* Auth: Sign In link or Clerk UserButton */}
+              {clerkEnabled && (
+                <>
+                  {!clerkLoaded && (
+                    <Link
+                      href="/sign-in"
+                      className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
+                      aria-label="Sign in"
+                    >
+                      <User className="h-5 w-5" />
+                    </Link>
+                  )}
+                  <div className={clerkLoaded ? 'p-1' : 'absolute opacity-0 pointer-events-none'}>
+                    <ClerkUserButton
+                      appearance={{
+                        elements: {
+                          avatarBox: 'h-8 w-8',
+                        },
+                      }}
+                    />
+                  </div>
+                </>
               )}
-              {mounted && auth.isLoaded && auth.isSignedIn && (
-                <div className="p-1">
-                  <UserButton
-                    appearance={{
-                      elements: {
-                        avatarBox: 'h-8 w-8',
-                      },
-                    }}
-                  />
-                </div>
+              {!clerkEnabled && (
+                <Link
+                  href="/sign-in"
+                  className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
+                  aria-label="Sign in"
+                >
+                  <User className="h-5 w-5" />
+                </Link>
               )}
 
               <button

@@ -4,19 +4,12 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { X, ChevronRight, User, LogOut } from 'lucide-react'
 
-const SignInButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignInButton })), { ssr: false })
-const SignOutButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignOutButton })), { ssr: false })
+const ClerkSignOutButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.SignOutButton),
+  { ssr: false, loading: () => null }
+)
 
-// Auth hook — wrapped in try/catch so the site works even without Clerk keys
-function useAuthSafe() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { useAuth } = require('@clerk/nextjs')
-    return useAuth()
-  } catch {
-    return { isSignedIn: false, isLoaded: false }
-  }
-}
+const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -24,9 +17,10 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-  const auth = useAuthSafe()
-
   if (!isOpen) return null
+
+  // Check if user is signed in by looking for Clerk's user button in the header
+  const isSignedIn = typeof window !== 'undefined' && !!document.querySelector('.cl-userButtonTrigger')
 
   const menuItems = [
     { href: '/shop', label: 'All Products' },
@@ -99,21 +93,20 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <div className="px-4 mb-2">
               <span className="text-[11px] uppercase tracking-[2px] text-warm-gray font-medium">Account</span>
             </div>
-            {auth.isLoaded && !auth.isSignedIn && (
-              <SignInButton mode="modal">
-                <button
-                  onClick={onClose}
-                  className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <User className="h-4 w-4" />
-                    Sign In
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-warm-gray" />
-                </button>
-              </SignInButton>
+            {!isSignedIn && (
+              <Link
+                href="/sign-in"
+                onClick={onClose}
+                className="flex items-center justify-between px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
+              >
+                <span className="flex items-center gap-3">
+                  <User className="h-4 w-4" />
+                  Sign In
+                </span>
+                <ChevronRight className="h-4 w-4 text-warm-gray" />
+              </Link>
             )}
-            {auth.isLoaded && auth.isSignedIn && (
+            {isSignedIn && (
               <>
                 <Link
                   href="/account"
@@ -126,14 +119,16 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   </span>
                   <ChevronRight className="h-4 w-4 text-warm-gray" />
                 </Link>
-                <SignOutButton>
-                  <button className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors">
-                    <span className="flex items-center gap-3">
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </span>
-                  </button>
-                </SignOutButton>
+                {clerkEnabled && (
+                  <ClerkSignOutButton>
+                    <button className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors">
+                      <span className="flex items-center gap-3">
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </span>
+                    </button>
+                  </ClerkSignOutButton>
+                )}
               </>
             )}
           </div>
