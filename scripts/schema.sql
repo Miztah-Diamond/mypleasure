@@ -60,6 +60,22 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Product requests table
+CREATE TABLE IF NOT EXISTS product_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT,
+  email TEXT,
+  phone TEXT,
+  product_name TEXT,
+  category TEXT,
+  description TEXT,
+  product_slug TEXT,
+  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'reviewed', 'sourcing', 'fulfilled', 'declined')),
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);

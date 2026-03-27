@@ -91,6 +91,21 @@ export interface StoreSettings {
   updated_at: string
 }
 
+export interface ProductRequest {
+  id: string
+  name: string | null
+  email: string | null
+  phone: string | null
+  product_name: string | null
+  category: string | null
+  description: string | null
+  product_slug: string | null
+  status: 'new' | 'reviewed' | 'sourcing' | 'fulfilled' | 'declined'
+  admin_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface DashboardMetrics {
   todayOrders: number
   todayRevenue: number

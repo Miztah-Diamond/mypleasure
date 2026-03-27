@@ -35,6 +35,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     { href: '/contact', label: 'Contact' },
     { href: '/faq', label: 'FAQ' },
     { href: '/track', label: 'Track Order' },
+    { href: '/request', label: 'Request a Product' },
   ]
 
   return (

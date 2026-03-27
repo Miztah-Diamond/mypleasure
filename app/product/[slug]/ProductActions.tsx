@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Minus, Plus, ShoppingBag, Zap, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Minus, Plus, ShoppingBag, Zap, AlertCircle, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart'
@@ -55,6 +56,12 @@ export function ProductActions({ product }: ProductActionsProps) {
         <Button size="xl" disabled className="w-full gap-2 opacity-50 cursor-not-allowed">
           <ShoppingBag className="h-5 w-5" />
           Out of Stock
+        </Button>
+        <Button size="xl" variant="secondary" asChild className="w-full gap-2">
+          <Link href={`/request?product=${encodeURIComponent(product.name)}&slug=${product.slug}&category=${product.category}`}>
+            <Sparkles className="h-5 w-5" />
+            Request Restock
+          </Link>
         </Button>
       </div>
     )

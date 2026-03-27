@@ -48,6 +48,7 @@ export function Footer() {
                 { href: '/faq', label: 'FAQ' },
                 { href: '/contact', label: 'Contact Us' },
                 { href: '/track', label: 'Track Order' },
+                { href: '/request', label: 'Request a Product' },
                 { href: '/shipping', label: 'Shipping Info' },
                 { href: '/returns', label: 'Returns & Refunds' },
                 { href: '/privacy', label: 'Privacy Policy' },

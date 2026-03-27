@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, MessageSquarePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ClerkUserButton = dynamic(
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/requests', label: 'Requests', icon: MessageSquarePlus },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
