@@ -2,11 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, ShoppingBag, Menu, ChevronDown } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { Search, ShoppingBag, Menu, ChevronDown, User } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
 import { MobileMenu } from './MobileMenu'
 import { SearchOverlay } from '@/components/shared/SearchOverlay'
 import { useCartStore } from '@/store/cart'
+
+// Dynamic imports for Clerk components (avoid SSR issues)
+const SignedIn = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedIn })), { ssr: false })
+const SignedOut = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedOut })), { ssr: false })
+const UserButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.UserButton })), { ssr: false })
+const SignInButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignInButton })), { ssr: false })
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -111,6 +118,31 @@ export function Header() {
               >
                 <Search className="h-5 w-5" />
               </button>
+
+              {/* Auth: Sign In / User Button */}
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
+                    aria-label="Sign in"
+                  >
+                    <User className="h-5 w-5" />
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <div className="p-1">
+                  <UserButton
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: 'h-8 w-8',
+                      },
+                    }}
+                  />
+                </div>
+              </SignedIn>
+
               <button
                 onClick={openCart}
                 className="relative p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
