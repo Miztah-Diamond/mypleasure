@@ -4,10 +4,19 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { X, ChevronRight, User, LogOut } from 'lucide-react'
 
-const SignedIn = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedIn })), { ssr: false })
-const SignedOut = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedOut })), { ssr: false })
 const SignInButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignInButton })), { ssr: false })
 const SignOutButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignOutButton })), { ssr: false })
+
+// Auth hook — wrapped in try/catch so the site works even without Clerk keys
+function useAuthSafe() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useAuth } = require('@clerk/nextjs')
+    return useAuth()
+  } catch {
+    return { isSignedIn: false, isLoaded: false }
+  }
+}
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -15,6 +24,8 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+  const auth = useAuthSafe()
+
   if (!isOpen) return null
 
   const menuItems = [
@@ -88,7 +99,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <div className="px-4 mb-2">
               <span className="text-[11px] uppercase tracking-[2px] text-warm-gray font-medium">Account</span>
             </div>
-            <SignedOut>
+            {auth.isLoaded && !auth.isSignedIn && (
               <SignInButton mode="modal">
                 <button
                   onClick={onClose}
@@ -101,28 +112,30 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   <ChevronRight className="h-4 w-4 text-warm-gray" />
                 </button>
               </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Link
-                href="/account"
-                onClick={onClose}
-                className="flex items-center justify-between px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
-              >
-                <span className="flex items-center gap-3">
-                  <User className="h-4 w-4" />
-                  My Account
-                </span>
-                <ChevronRight className="h-4 w-4 text-warm-gray" />
-              </Link>
-              <SignOutButton>
-                <button className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors">
+            )}
+            {auth.isLoaded && auth.isSignedIn && (
+              <>
+                <Link
+                  href="/account"
+                  onClick={onClose}
+                  className="flex items-center justify-between px-6 py-3.5 text-chocolate hover:bg-cream hover:text-gold transition-colors"
+                >
                   <span className="flex items-center gap-3">
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
+                    <User className="h-4 w-4" />
+                    My Account
                   </span>
-                </button>
-              </SignOutButton>
-            </SignedIn>
+                  <ChevronRight className="h-4 w-4 text-warm-gray" />
+                </Link>
+                <SignOutButton>
+                  <button className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors">
+                    <span className="flex items-center gap-3">
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </span>
+                  </button>
+                </SignOutButton>
+              </>
+            )}
           </div>
 
           {/* Footer */}

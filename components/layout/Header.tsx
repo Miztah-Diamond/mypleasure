@@ -9,21 +9,33 @@ import { MobileMenu } from './MobileMenu'
 import { SearchOverlay } from '@/components/shared/SearchOverlay'
 import { useCartStore } from '@/store/cart'
 
-// Dynamic imports for Clerk components (avoid SSR issues)
-const SignedIn = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedIn })), { ssr: false })
-const SignedOut = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignedOut })), { ssr: false })
+// Dynamic imports for Clerk components (Clerk v7 exports)
 const UserButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.UserButton })), { ssr: false })
 const SignInButton = dynamic(() => import('@clerk/nextjs').then(mod => ({ default: mod.SignInButton })), { ssr: false })
+
+// Auth hook — wrapped in try/catch so the site works even without Clerk keys
+function useAuthSafe() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useAuth } = require('@clerk/nextjs')
+    return useAuth()
+  } catch {
+    return { isSignedIn: false, isLoaded: false }
+  }
+}
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const itemCount = useCartStore((state) => state.items.reduce((count, item) => count + item.quantity, 0))
   const { openCart } = useCartStore()
+  const auth = useAuthSafe()
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
@@ -120,7 +132,7 @@ export function Header() {
               </button>
 
               {/* Auth: Sign In / User Button */}
-              <SignedOut>
+              {mounted && auth.isLoaded && !auth.isSignedIn && (
                 <SignInButton mode="modal">
                   <button
                     className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
@@ -129,11 +141,10 @@ export function Header() {
                     <User className="h-5 w-5" />
                   </button>
                 </SignInButton>
-              </SignedOut>
-              <SignedIn>
+              )}
+              {mounted && auth.isLoaded && auth.isSignedIn && (
                 <div className="p-1">
                   <UserButton
-                    afterSignOutUrl="/"
                     appearance={{
                       elements: {
                         avatarBox: 'h-8 w-8',
@@ -141,7 +152,7 @@ export function Header() {
                     }}
                   />
                 </div>
-              </SignedIn>
+              )}
 
               <button
                 onClick={openCart}
