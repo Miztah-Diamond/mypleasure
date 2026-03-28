@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPaystackSignature } from '@/lib/paystack'
-import { getDb } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No signature' }, { status: 400 })
     }
 
-    // Verify webhook signature
     const isValid = verifyPaystackSignature(body, signature)
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
@@ -24,9 +23,12 @@ export async function POST(request: NextRequest) {
       const orderNumber = metadata?.order_number
 
       if (orderNumber) {
-        const sql = getDb()
+        const supabase = createAdminClient()
         try {
-          await sql`UPDATE orders SET payment_status = 'paid', payment_reference = ${reference} WHERE order_number = ${orderNumber}`
+          await supabase
+            .from('orders')
+            .update({ payment_status: 'paid', payment_reference: reference })
+            .eq('order_number', orderNumber)
         } catch (error) {
           console.error('Webhook update error:', error)
         }

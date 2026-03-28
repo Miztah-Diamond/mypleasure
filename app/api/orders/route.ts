@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, formatOrderEmail } from '@/lib/email'
 import { generateOrderNumber } from '@/lib/utils'
 
@@ -13,14 +13,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const sql = getDb()
-    const rows = await sql`SELECT * FROM orders WHERE order_number = ${orderNumber} AND customer_email = ${email}`
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('order_number', orderNumber)
+      .eq('customer_email', email)
+      .single()
 
-    if (!rows || rows.length === 0) {
+    if (error || !data) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    return NextResponse.json(rows[0])
+    return NextResponse.json(data)
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -29,24 +34,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_fee, items, subtotal, total, payment_reference } = body
+    const { customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_fee, items, subtotal, total, payment_reference, user_id } = body
 
     if (!customer_name || !customer_email || !items || items.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const sql = getDb()
+    const supabase = createAdminClient()
 
     // Validate stock availability before creating order
     const outOfStock: string[] = []
     for (const item of items) {
       if (item.product_id) {
-        const stockCheck = await sql`SELECT name, stock FROM products WHERE id = ${item.product_id}`
-        if (stockCheck.length > 0) {
-          const product = stockCheck[0]
-          if (product.stock < item.quantity) {
-            outOfStock.push(`${product.name} (only ${product.stock} left)`)
-          }
+        const { data: product } = await supabase
+          .from('products')
+          .select('name, stock')
+          .eq('id', item.product_id)
+          .single()
+
+        if (product && product.stock < item.quantity) {
+          outOfStock.push(`${product.name} (only ${product.stock} left)`)
         }
       }
     }
@@ -60,21 +67,42 @@ export async function POST(request: NextRequest) {
 
     const order_number = generateOrderNumber()
 
-    const rows = await sql`INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_fee, items, subtotal, total, payment_reference, payment_status, order_status) VALUES (${order_number}, ${customer_name}, ${customer_email}, ${customer_phone}, ${JSON.stringify(delivery_address)}, ${delivery_method}, ${delivery_fee}, ${JSON.stringify(items)}, ${subtotal}, ${total}, ${payment_reference}, 'paid', 'pending') RETURNING *`
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        delivery_address: typeof delivery_address === 'string' ? JSON.parse(delivery_address) : delivery_address,
+        delivery_method,
+        delivery_fee,
+        items: typeof items === 'string' ? JSON.parse(items) : items,
+        subtotal,
+        total,
+        payment_reference,
+        payment_status: 'paid',
+        order_status: 'pending',
+        user_id: user_id || null,
+      })
+      .select()
+      .single()
 
-    if (!rows || rows.length === 0) {
-      console.error('Order creation failed: no rows returned')
+    if (error || !data) {
+      console.error('Order creation failed:', error)
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }
 
     // Decrement stock for each purchased item
     for (const item of items) {
       if (item.product_id) {
-        await sql`UPDATE products SET stock = GREATEST(stock - ${item.quantity}, 0) WHERE id = ${item.product_id}`
+        // Use rpc for GREATEST to prevent negative stock
+        await supabase.rpc('decrement_stock', {
+          p_id: item.product_id,
+          qty: item.quantity,
+        })
       }
     }
-
-    const data = rows[0]
 
     // Send order confirmation email to customer
     try {

@@ -1,32 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = getDb()
+    const supabase = createAdminClient()
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const search = searchParams.get('search')
 
-    let rows
+    let query = supabase.from('orders').select('*')
+
     if (search) {
-      rows = await sql`
-        SELECT * FROM orders
-        WHERE order_number ILIKE ${'%' + search + '%'}
-           OR customer_name ILIKE ${'%' + search + '%'}
-           OR customer_email ILIKE ${'%' + search + '%'}
-        ORDER BY created_at DESC
-      `
+      query = query.or(`order_number.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`)
     } else if (status && status !== 'all') {
-      rows = await sql`
-        SELECT * FROM orders WHERE order_status = ${status}
-        ORDER BY created_at DESC
-      `
-    } else {
-      rows = await sql`SELECT * FROM orders ORDER BY created_at DESC`
+      query = query.eq('order_status', status)
     }
 
-    return NextResponse.json(rows)
+    query = query.order('created_at', { ascending: false })
+
+    const { data, error } = await query
+    if (error) throw error
+
+    return NextResponse.json(data || [])
   } catch (error) {
     console.error('Orders GET error:', error)
     return NextResponse.json([], { status: 200 })

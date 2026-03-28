@@ -85,6 +85,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status);
 CREATE INDEX IF NOT EXISTS idx_orders_payment ON orders(payment_status);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_email ON orders(customer_email);
 
 -- Enable RLS
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
@@ -120,3 +121,36 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- RLS for product_requests
+ALTER TABLE product_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can create product requests" ON product_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Product requests viewable by everyone" ON product_requests FOR SELECT USING (true);
+
+-- Function: decrement_stock (called from orders API)
+CREATE OR REPLACE FUNCTION decrement_stock(product_id UUID, qty INTEGER)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE products SET stock = stock - qty WHERE id = product_id AND stock >= qty;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: get_weekly_revenue (called from admin metrics API)
+CREATE OR REPLACE FUNCTION get_weekly_revenue()
+RETURNS TABLE(day TEXT, revenue BIGINT) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    TO_CHAR(d.day, 'Dy') AS day,
+    COALESCE(SUM(o.total), 0)::BIGINT AS revenue
+  FROM generate_series(
+    DATE_TRUNC('week', NOW()),
+    DATE_TRUNC('week', NOW()) + INTERVAL '6 days',
+    INTERVAL '1 day'
+  ) AS d(day)
+  LEFT JOIN orders o ON DATE_TRUNC('day', o.created_at) = d.day
+    AND o.payment_status = 'paid'
+  GROUP BY d.day
+  ORDER BY d.day;
+END;
+$$ LANGUAGE plpgsql;

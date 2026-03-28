@@ -2,50 +2,54 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { Search, ShoppingBag, Menu, ChevronDown, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, ShoppingBag, Menu, ChevronDown, User, LogOut } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
 import { MobileMenu } from './MobileMenu'
 import { SearchOverlay } from '@/components/shared/SearchOverlay'
 import { useCartStore } from '@/store/cart'
-
-// Dynamic Clerk imports — same pattern as admin layout
-const ClerkUserButton = dynamic(
-  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
-  { ssr: false, loading: () => null }
-)
-
-const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+import { createClient } from '@/lib/supabase/client'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [clerkLoaded, setClerkLoaded] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const itemCount = useCartStore((state) => state.items.reduce((count, item) => count + item.quantity, 0))
   const { openCart } = useCartStore()
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handleScroll)
 
-    // Check when Clerk loads and user is signed in (UserButton will render)
-    if (clerkEnabled) {
-      const checkClerk = setInterval(() => {
-        const clerkBtn = document.querySelector('.cl-userButtonTrigger')
-        if (clerkBtn) {
-          setClerkLoaded(true)
-          clearInterval(checkClerk)
-        }
-      }, 500)
-      // Stop checking after 5s
-      setTimeout(() => clearInterval(checkClerk), 5000)
-      return () => { clearInterval(checkClerk); window.removeEventListener('scroll', handleScroll) }
-    }
+    // Get current user
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
 
-    return () => window.removeEventListener('scroll', handleScroll)
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      subscription.unsubscribe()
+    }
   }, [])
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setIsUserMenuOpen(false)
+    router.push('/')
+    router.refresh()
+  }
 
   const categories = [
     { href: '/shop?category=women', label: 'For Her' },
@@ -53,6 +57,10 @@ export function Header() {
     { href: '/shop?category=couples', label: 'Couples' },
     { href: '/shop?category=accessories', label: 'Accessories' },
   ]
+
+  const userInitial = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.charAt(0).toUpperCase()
+    : user?.email?.charAt(0).toUpperCase() || 'U'
 
   return (
     <>
@@ -137,30 +145,42 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </button>
 
-              {/* Auth: Sign In link or Clerk UserButton */}
-              {clerkEnabled && (
-                <>
-                  {!clerkLoaded && (
-                    <Link
-                      href="/sign-in"
-                      className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
-                      aria-label="Sign in"
-                    >
-                      <User className="h-5 w-5" />
-                    </Link>
+              {/* Auth: User menu or Sign In link */}
+              {user ? (
+                <div
+                  className="relative"
+                  onMouseEnter={() => setIsUserMenuOpen(true)}
+                  onMouseLeave={() => setIsUserMenuOpen(false)}
+                >
+                  <button
+                    className="flex items-center justify-center w-9 h-9 bg-gold/10 text-gold rounded-full text-sm font-semibold hover:bg-gold/20 transition-colors"
+                    aria-label="Account menu"
+                  >
+                    {userInitial}
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute top-full right-0 w-48 bg-white rounded-xl shadow-xl border border-beige/50 py-2 mt-1 animate-fade-in-up">
+                      <div className="px-4 py-2 border-b border-beige/50">
+                        <p className="text-xs text-warm-gray truncate">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-chocolate hover:bg-cream hover:text-gold transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        My Account
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-chocolate hover:bg-cream hover:text-wine transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </div>
                   )}
-                  <div className={clerkLoaded ? 'p-1' : 'absolute opacity-0 pointer-events-none'}>
-                    <ClerkUserButton
-                      appearance={{
-                        elements: {
-                          avatarBox: 'h-8 w-8',
-                        },
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-              {!clerkEnabled && (
+                </div>
+              ) : (
                 <Link
                   href="/sign-in"
                   className="p-2.5 text-chocolate hover:text-gold transition-colors rounded-xl hover:bg-cream"
@@ -187,7 +207,7 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} user={user} onSignOut={handleSignOut} />
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )

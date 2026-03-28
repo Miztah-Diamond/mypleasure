@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, email, phone, product_name, category, description, product_slug } = body
 
-    // At least one field should be provided
     if (!product_name && !description) {
       return NextResponse.json(
         { error: 'Please describe the product you are looking for' },
@@ -15,15 +14,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const sql = getDb()
+    const supabase = createAdminClient()
 
-    const rows = await sql`
-      INSERT INTO product_requests (name, email, phone, product_name, category, description, product_slug)
-      VALUES (${name || null}, ${email || null}, ${phone || null}, ${product_name || null}, ${category || null}, ${description || null}, ${product_slug || null})
-      RETURNING *
-    `
+    const { data, error } = await supabase
+      .from('product_requests')
+      .insert({
+        name: name || null,
+        email: email || null,
+        phone: phone || null,
+        product_name: product_name || null,
+        category: category || null,
+        description: description || null,
+        product_slug: product_slug || null,
+      })
+      .select()
+      .single()
 
-    if (!rows || rows.length === 0) {
+    if (error || !data) {
       return NextResponse.json({ error: 'Failed to submit request' }, { status: 500 })
     }
 
@@ -52,9 +59,6 @@ export async function POST(request: NextRequest) {
                 <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/requests" style="display: inline-block; background: #C4956A; color: #fff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">View in Dashboard</a>
               </div>
             </div>
-            <div style="background: #FAF6F2; padding: 16px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #8B7B74;">© ${new Date().getFullYear()} MP Wellness</p>
-            </div>
           </div>
         `,
       })
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
       console.error('Admin notification email error:', emailError)
     }
 
-    return NextResponse.json({ success: true, request: rows[0] }, { status: 201 })
+    return NextResponse.json({ success: true, request: data }, { status: 201 })
   } catch (err) {
     console.error('Product request API error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

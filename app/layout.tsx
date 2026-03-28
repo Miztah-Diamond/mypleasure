@@ -2,9 +2,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { LayoutWrapper } from '@/components/layout/LayoutWrapper'
 import { Toaster } from '@/components/ui/toast'
-import { ClerkProvider } from '@clerk/nextjs'
-
-const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 export const metadata: Metadata = {
   title: {
@@ -36,9 +33,6 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
     },
   },
-  verification: {
-    // Add when available: google: 'xxx', yandex: 'xxx'
-  },
 }
 
 export default function RootLayout({
@@ -46,7 +40,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const content = (
+  return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -59,10 +53,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-
-  if (clerkEnabled) {
-    return <ClerkProvider>{content}</ClerkProvider>
-  }
-
-  return content
 }

@@ -1,16 +1,11 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import dynamic from 'next/dynamic'
+import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, MessageSquarePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const ClerkUserButton = dynamic(
-  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
-  { ssr: false, loading: () => null }
-)
+import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -20,22 +15,34 @@ const navItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-
-function AdminAvatar() {
-  if (clerkEnabled) {
-    return <ClerkUserButton />
-  }
+function AdminAvatar({ email }: { email?: string }) {
+  const initial = email ? email.charAt(0).toUpperCase() : 'A'
   return (
     <div className="w-8 h-8 bg-gold/10 rounded-full flex items-center justify-center">
-      <span className="text-xs font-semibold text-gold">A</span>
+      <span className="text-xs font-semibold text-gold">{initial}</span>
     </div>
   )
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [adminEmail, setAdminEmail] = useState<string | undefined>()
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setAdminEmail(user?.email ?? undefined)
+    })
+  }, [])
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/sign-in')
+    router.refresh()
+  }
 
   // Don't show admin chrome on login page
   if (pathname === '/admin/login') {
@@ -90,13 +97,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Footer */}
           <div className="p-3 border-t border-cream/10 space-y-2">
             <div className="flex items-center justify-center">
-              <AdminAvatar />
+              <AdminAvatar email={adminEmail} />
             </div>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-cream/50 hover:text-cream hover:bg-cream/5 transition-all"
+            >
+              <LogOut className="h-5 w-5" />
+              Sign Out
+            </button>
             <Link
               href="/"
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-cream/50 hover:text-cream hover:bg-cream/5 transition-all"
             >
-              <LogOut className="h-5 w-5" />
+              <Package className="h-5 w-5" />
               Back to Store
             </Link>
           </div>
@@ -115,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <AdminAvatar />
+            <AdminAvatar email={adminEmail} />
             <span className="text-sm text-chocolate hidden sm:block">Admin</span>
           </div>
         </header>

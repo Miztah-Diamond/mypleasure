@@ -1,41 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
+import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export default function SignUpPage() {
-  const [fullName, setFullName] = useState('')
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
-      setLoading(false)
-      return
-    }
-
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     })
 
     if (error) {
@@ -57,7 +42,7 @@ export default function SignUpPage() {
             Check your email
           </h1>
           <p className="text-warm-gray mb-8">
-            We&apos;ve sent a confirmation link to <strong className="text-chocolate">{email}</strong>. Click the link to activate your account.
+            We&apos;ve sent a password reset link to <strong className="text-chocolate">{email}</strong>. Click the link to set a new password.
           </p>
           <Button variant="outline" asChild>
             <Link href="/sign-in">Back to Sign In</Link>
@@ -81,23 +66,13 @@ export default function SignUpPage() {
         {/* Card */}
         <div className="bg-white rounded-2xl border border-beige/50 shadow-xl p-8">
           <h1 className="font-[family-name:var(--font-playfair)] text-2xl font-semibold text-wine text-center mb-2">
-            Create an account
+            Forgot password?
           </h1>
           <p className="text-sm text-warm-gray text-center mb-8">
-            Track orders and save your details for faster checkout
+            Enter your email and we&apos;ll send you a reset link
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-chocolate mb-1.5">Full Name</label>
-              <Input
-                type="text"
-                placeholder="Your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-chocolate mb-1.5">Email</label>
               <Input
@@ -109,41 +84,19 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-chocolate mb-1.5">Password</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Minimum 8 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-gray hover:text-chocolate transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
             {error && (
               <p className="text-sm text-error bg-error/5 px-4 py-3 rounded-xl">{error}</p>
             )}
 
             <Button type="submit" size="xl" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Send Reset Link'}
             </Button>
           </form>
 
           <p className="text-sm text-warm-gray text-center mt-6">
-            Already have an account?{' '}
-            <Link href="/sign-in" className="text-gold hover:text-gold/80 font-medium transition-colors">
-              Sign in
+            <Link href="/sign-in" className="text-gold hover:text-gold/80 font-medium transition-colors inline-flex items-center gap-1">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to Sign In
             </Link>
           </p>
         </div>

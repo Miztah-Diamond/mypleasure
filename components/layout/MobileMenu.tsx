@@ -1,26 +1,18 @@
 "use client"
 
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { X, ChevronRight, User, LogOut } from 'lucide-react'
-
-const ClerkSignOutButton = dynamic(
-  () => import('@clerk/nextjs').then((mod) => mod.SignOutButton),
-  { ssr: false, loading: () => null }
-)
-
-const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
+  user: SupabaseUser | null
+  onSignOut: () => void
 }
 
-export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+export function MobileMenu({ isOpen, onClose, user, onSignOut }: MobileMenuProps) {
   if (!isOpen) return null
-
-  // Check if user is signed in by looking for Clerk's user button in the header
-  const isSignedIn = typeof window !== 'undefined' && !!document.querySelector('.cl-userButtonTrigger')
 
   const menuItems = [
     { href: '/shop', label: 'All Products' },
@@ -94,7 +86,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <div className="px-4 mb-2">
               <span className="text-[11px] uppercase tracking-[2px] text-warm-gray font-medium">Account</span>
             </div>
-            {!isSignedIn && (
+            {!user ? (
               <Link
                 href="/sign-in"
                 onClick={onClose}
@@ -106,8 +98,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 </span>
                 <ChevronRight className="h-4 w-4 text-warm-gray" />
               </Link>
-            )}
-            {isSignedIn && (
+            ) : (
               <>
                 <Link
                   href="/account"
@@ -120,16 +111,15 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   </span>
                   <ChevronRight className="h-4 w-4 text-warm-gray" />
                 </Link>
-                {clerkEnabled && (
-                  <ClerkSignOutButton>
-                    <button className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors">
-                      <span className="flex items-center gap-3">
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                      </span>
-                    </button>
-                  </ClerkSignOutButton>
-                )}
+                <button
+                  onClick={() => { onSignOut(); onClose() }}
+                  className="flex items-center justify-between w-full px-6 py-3.5 text-chocolate hover:bg-cream hover:text-wine transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </span>
+                </button>
               </>
             )}
           </div>
@@ -137,7 +127,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           {/* Footer */}
           <div className="p-6 border-t border-beige bg-cream">
             <p className="text-xs text-warm-gray text-center">
-              100% Discreet • Body-Safe • Secure Payment
+              100% Discreet &bull; Body-Safe &bull; Secure Payment
             </p>
           </div>
         </div>
