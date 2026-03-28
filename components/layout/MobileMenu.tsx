@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { X, ChevronRight, User, LogOut } from 'lucide-react'
+import { X, ChevronRight, User, LogOut, Shield } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface MobileMenuProps {
@@ -9,9 +9,10 @@ interface MobileMenuProps {
   onClose: () => void
   user: SupabaseUser | null
   onSignOut: () => void
+  isAdmin?: boolean
 }
 
-export function MobileMenu({ isOpen, onClose, user, onSignOut }: MobileMenuProps) {
+export function MobileMenu({ isOpen, onClose, user, onSignOut, isAdmin }: MobileMenuProps) {
   if (!isOpen) return null
 
   const menuItems = [
@@ -100,6 +101,19 @@ export function MobileMenu({ isOpen, onClose, user, onSignOut }: MobileMenuProps
               </Link>
             ) : (
               <>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-6 py-3.5 text-wine hover:bg-wine/5 transition-colors font-medium"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Shield className="h-4 w-4" />
+                      Admin Dashboard
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-wine/50" />
+                  </Link>
+                )}
                 <Link
                   href="/account"
                   onClick={onClose}

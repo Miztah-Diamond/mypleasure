@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingBag, Menu, ChevronDown, User, LogOut } from 'lucide-react'
+import { Search, ShoppingBag, Menu, ChevronDown, User, LogOut, Shield } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
 import { MobileMenu } from './MobileMenu'
 import { SearchOverlay } from '@/components/shared/SearchOverlay'
@@ -61,6 +61,9 @@ export function Header() {
   const userInitial = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.charAt(0).toUpperCase()
     : user?.email?.charAt(0).toUpperCase() || 'U'
+
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'codedcrystal@gmail.com'
+  const isAdmin = user?.email === adminEmail
 
   return (
     <>
@@ -163,6 +166,15 @@ export function Header() {
                       <div className="px-4 py-2 border-b border-beige/50">
                         <p className="text-xs text-warm-gray truncate">{user.email}</p>
                       </div>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-wine font-medium hover:bg-wine/5 transition-colors"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Admin Dashboard
+                        </Link>
+                      )}
                       <Link
                         href="/account"
                         className="flex items-center gap-2 px-4 py-2.5 text-sm text-chocolate hover:bg-cream hover:text-gold transition-colors"
@@ -207,7 +219,7 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} user={user} onSignOut={handleSignOut} />
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} user={user} onSignOut={handleSignOut} isAdmin={isAdmin} />
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )
