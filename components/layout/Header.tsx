@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, ShoppingBag, Menu, ChevronDown, User, LogOut, Shield } from 'lucide-react'
@@ -18,9 +18,33 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [user, setUser] = useState<SupabaseUser | null>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  const userMenuTimeout = useRef<NodeJS.Timeout | null>(null)
   const itemCount = useCartStore((state) => state.items.reduce((count, item) => count + item.quantity, 0))
   const { openCart } = useCartStore()
   const router = useRouter()
+
+  // Close user menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isUserMenuOpen])
+
+  const handleUserMenuEnter = useCallback(() => {
+    if (userMenuTimeout.current) clearTimeout(userMenuTimeout.current)
+    setIsUserMenuOpen(true)
+  }, [])
+
+  const handleUserMenuLeave = useCallback(() => {
+    userMenuTimeout.current = setTimeout(() => setIsUserMenuOpen(false), 300)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
@@ -152,10 +176,12 @@ export function Header() {
               {user ? (
                 <div
                   className="relative"
-                  onMouseEnter={() => setIsUserMenuOpen(true)}
-                  onMouseLeave={() => setIsUserMenuOpen(false)}
+                  ref={userMenuRef}
+                  onMouseEnter={handleUserMenuEnter}
+                  onMouseLeave={handleUserMenuLeave}
                 >
                   <button
+                    onClick={() => setIsUserMenuOpen(prev => !prev)}
                     className="flex items-center justify-center w-9 h-9 bg-gold/10 text-gold rounded-full text-sm font-semibold hover:bg-gold/20 transition-colors"
                     aria-label="Account menu"
                   >
@@ -169,6 +195,7 @@ export function Header() {
                       {isAdmin && (
                         <Link
                           href="/admin"
+                          onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-wine font-medium hover:bg-wine/5 transition-colors"
                         >
                           <Shield className="h-4 w-4" />
@@ -177,6 +204,7 @@ export function Header() {
                       )}
                       <Link
                         href="/account"
+                        onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2.5 text-sm text-chocolate hover:bg-cream hover:text-gold transition-colors"
                       >
                         <User className="h-4 w-4" />
