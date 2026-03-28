@@ -13,9 +13,9 @@ export function Footer() {
               <Image
                 src="/images/logo-light.png"
                 alt="MP Wellness Collection"
-                width={160}
-                height={80}
-                className="h-16 w-auto"
+                width={240}
+                height={120}
+                className="h-24 w-auto"
               />
             </Link>
             <p className="text-cream/70 text-sm leading-relaxed max-w-xs">
