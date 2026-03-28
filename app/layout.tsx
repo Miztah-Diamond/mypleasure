@@ -46,6 +46,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1E1218" />
       </head>
       <body className="font-[family-name:var(--font-body)] bg-cream text-chocolate antialiased">
         <LayoutWrapper>{children}</LayoutWrapper>

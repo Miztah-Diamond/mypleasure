@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Package, ShoppingCart, Settings, LogOut, Menu, X, MessageSquarePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -64,8 +65,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-cream/10">
-            <Link href="/admin" className="flex items-center gap-2">
-              <span className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-gold">MP</span>
+            <Link href="/admin" className="flex items-center gap-2.5">
+              <Image src="/images/logo-full.png" alt="MP" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
               <span className="text-xs uppercase tracking-[2px] text-cream/60">Admin</span>
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-cream/60 hover:text-cream">

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Heart } from 'lucide-react'
 
 export function Footer() {
@@ -9,8 +10,13 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
-              <span className="font-[family-name:var(--font-playfair)] text-3xl font-bold text-gold">MP</span>
-              <span className="block text-[11px] uppercase tracking-[3px] text-cream/60 mt-1">Wellness</span>
+              <Image
+                src="/images/logo-light.png"
+                alt="MP Wellness Collection"
+                width={160}
+                height={80}
+                className="h-16 w-auto"
+              />
             </Link>
             <p className="text-cream/70 text-sm leading-relaxed max-w-xs">
               Premium wellness products delivered with absolute discretion. Your pleasure, your privacy, our priority.

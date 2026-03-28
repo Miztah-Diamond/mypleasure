@@ -124,3 +124,13 @@ Architecture Decision Records (ADRs) for the MP Wellness e-commerce platform.
 - Admin auth via email match in middleware (ADMIN_EMAIL env var)
 - RLS policies for all tables, DB functions (decrement_stock, get_weekly_revenue)
 **Consequences:** Simpler architecture (1 service vs 3), lower cost, unified dashboard, but requires custom auth UI instead of Clerk's pre-built components.
+
+---
+
+## ADR-012: Brand Logo Integration Sitewide
+**Date:** 2026-03-28
+**Status:** Accepted
+**Context:** Site used plain text "MP" as the logo. Stanley provided an actual brand logo (gold "MP" on black background with "Wellness Collection" subtitle) that needed to be placed across all touchpoints.
+**Decision:** Generate multiple logo variants from the brand image and place them in all key locations: favicon (ICO with 16/32/48px), apple-icon (180px), OG image (1200x630), web manifest icons (192+512px), header (with text fallback), footer (transparent bg variant), mobile menu, admin sidebar, and all auth pages.
+**Implementation:** Generated logo variants via Python/Pillow, added web manifest, updated Next.js Image components in Header, Footer, MobileMenu, admin layout, and 5 auth pages.
+**Consequences:** Consistent brand identity across all pages. Logo uses the site's Playfair Display font for text portions. Multiple sizes ensure crisp display on all devices.

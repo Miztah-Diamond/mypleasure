@@ -190,6 +190,9 @@
 | app/admin/requests/page.tsx | Admin requests management with inline detail panel |
 
 | 2026-03-28 | **Major Migration: Neon + Clerk + Vercel Blob → Supabase** — Consolidated 3 services into 1. Rewrote 28+ files: all API routes (Neon SQL → Supabase query builder), auth (Clerk → Supabase Auth with custom pages), storage (Vercel Blob → Supabase Storage), middleware, Header, MobileMenu, admin layout. Created forgot-password, reset-password, and customer account pages. Build passes, 17 products seeded, admin user created, Vercel env vars updated. |
+| 2026-03-28 | **Admin Dashboard link added** — Admin users see "Admin Dashboard" with Shield icon in header dropdown + mobile menu. Uses NEXT_PUBLIC_ADMIN_EMAIL env var for client-side check. |
+| 2026-03-28 | **User dropdown UX improved** — Click-to-toggle + 300ms delayed mouse leave + click-outside-to-close. |
+| 2026-03-28 | **Brand logo added sitewide** — Logo image (gold MP on black with "Wellness Collection") added to: favicon.ico, apple-icon.png, OG image, web manifest icons (192+512), header, footer, mobile menu, admin sidebar, all auth pages. |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md

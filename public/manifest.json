@@ -1,0 +1,21 @@
+{
+  "name": "MP Wellness Collection",
+  "short_name": "MP Wellness",
+  "description": "Premium Adult Wellness Store — Lagos, Nigeria",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1E1218",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

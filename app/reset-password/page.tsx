@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -75,8 +76,8 @@ function ResetPasswordForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="font-[family-name:var(--font-playfair)] text-4xl font-bold text-wine">MP</span>
-            <span className="block text-[11px] uppercase tracking-[3px] text-warm-gray mt-1">Wellness</span>
+            <Image src="/images/logo-full.png" alt="MP Wellness Collection" width={80} height={80} className="h-20 w-20 rounded-xl object-cover mx-auto" />
+            <span className="block text-[11px] uppercase tracking-[3px] text-warm-gray mt-2">Wellness</span>
           </Link>
         </div>
 

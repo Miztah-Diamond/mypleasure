@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,7 +37,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-cream flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <span className="font-[family-name:var(--font-playfair)] text-4xl font-bold text-wine">MP</span>
+          <Image src="/images/logo-full.png" alt="MP" width={64} height={64} className="h-16 w-16 rounded-xl object-cover mx-auto" />
           <p className="text-[11px] uppercase tracking-[3px] text-warm-gray mt-1">Admin Portal</p>
         </div>
 

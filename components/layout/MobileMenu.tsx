@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { X, ChevronRight, User, LogOut, Shield } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -38,7 +39,7 @@ export function MobileMenu({ isOpen, onClose, user, onSignOut, isAdmin }: Mobile
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-beige">
-            <span className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-wine">MP</span>
+            <Image src="/images/logo-full.png" alt="MP Wellness" width={40} height={40} className="h-9 w-9 rounded-lg object-cover" />
             <button
               onClick={onClose}
               className="p-2 text-warm-gray hover:text-chocolate transition-colors rounded-lg"

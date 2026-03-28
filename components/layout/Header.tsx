@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Search, ShoppingBag, Menu, ChevronDown, User, LogOut, Shield } from 'lucide-react'
 import { AnnouncementBar } from './AnnouncementBar'
 import { MobileMenu } from './MobileMenu'
@@ -111,13 +112,23 @@ export function Header() {
             </button>
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-[family-name:var(--font-playfair)] text-2xl lg:text-3xl font-bold text-wine">
-                MP
-              </span>
-              <span className="hidden sm:block text-xs uppercase tracking-[3px] text-warm-gray font-light">
-                Wellness
-              </span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image
+                src="/images/logo-full.png"
+                alt="MP Wellness Collection"
+                width={48}
+                height={48}
+                className="h-10 w-10 lg:h-12 lg:w-12 rounded-lg object-cover"
+                priority
+              />
+              <div className="hidden sm:flex flex-col">
+                <span className="font-[family-name:var(--font-playfair)] text-lg lg:text-xl font-bold text-wine leading-tight">
+                  MP
+                </span>
+                <span className="text-[9px] uppercase tracking-[2px] text-warm-gray font-light leading-tight">
+                  Wellness
+                </span>
+              </div>
             </Link>
 
             {/* Desktop Navigation */}
