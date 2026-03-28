@@ -13,7 +13,7 @@
 | **Name** | My Pleasure LTD / MP Wellness |
 | **Repo** | https://github.com/Miztah-Diamond/mypleasure.git |
 | **Live URL** | https://mypleasure.vercel.app |
-| **Stack** | Next.js 15, TypeScript, Tailwind CSS v4, Neon (Postgres), Clerk (Auth), Paystack, Resend |
+| **Stack** | Next.js 15, TypeScript, Tailwind CSS v4, Supabase (Postgres + Auth + Storage), Paystack, Resend |
 | **Hosting** | Vercel (team: techzoid) |
 | **Design** | "Refined Sensuality" — wine/plum/gold palette, Playfair Display + DM Sans |
 
@@ -42,25 +42,29 @@
 ## Tech Stack Details
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| Database | Neon (serverless Postgres) | Drop-in Postgres, same schema as original |
-| Auth | Clerk | Admin dashboard protection |
+| Database | Supabase PostgreSQL | Migrated from Neon — unified platform, RLS policies, DB functions |
+| Auth | Supabase Auth | Migrated from Clerk — custom sign-in/sign-up/forgot-password pages |
+| Storage | Supabase Storage | Migrated from Vercel Blob — product-images bucket, public read |
 | Payments | Paystack | Nigeria's #1 gateway; billing as "MP Wellness" |
 | Email | Resend | Transactional emails (order confirm, status updates) |
 | State | Zustand + persist | Cart management |
 | Forms | React Hook Form + Zod | Checkout validation |
 | Charts | Recharts | Admin dashboard revenue charts |
 | UI | shadcn/ui + CVA | Custom themed components |
-| Images | Vercel Blob | Implemented — upload API + ImageUploader component |
 
 ## Active Files (Hot Reference)
 | Path | What |
 |------|------|
-| lib/db.ts | Neon database client |
+| lib/supabase/client.ts | Supabase browser client |
+| lib/supabase/server.ts | Supabase server client (cookies) |
+| lib/supabase/admin.ts | Supabase admin client (service role) |
+| lib/supabase/middleware.ts | Session refresh + route protection |
+| lib/db.ts | DB client (wraps Supabase admin) |
 | lib/data.ts | Product data queries with mock fallback |
 | lib/email.ts | Resend email (lazy-init pattern) |
 | lib/paystack.ts | Paystack verification |
 | store/cart.ts | Zustand cart store |
-| app/api/upload/route.ts | Vercel Blob image upload (POST/DELETE) |
+| app/api/upload/route.ts | Supabase Storage image upload (POST/DELETE) |
 | app/api/products/route.ts | Product CRUD list/create (GET/POST) |
 | app/api/products/[id]/route.ts | Product CRUD read/update/delete (GET/PUT/DELETE) |
 | components/admin/ImageUploader.tsx | Drag-drop image uploader with reorder |
@@ -143,24 +147,33 @@
 | 2026-03-27 | Suspense wrapper for /request page | `useSearchParams()` requires Suspense boundary in Next.js 15 App Router |
 | 2026-03-27 | Admin requests: inline detail panel (not separate page) | Faster workflow — click row to see details + update status without page navigation |
 
-## Infrastructure Status (as of 2026-03-27)
+## Infrastructure Status (as of 2026-03-28)
 | Service | Status | Notes |
 |---------|--------|-------|
-| Neon PostgreSQL | ✅ Live | Schema deployed, 32 products seeded, stock management active, product_requests table live |
-| Clerk Auth | ✅ Live (dev mode) | Sign-in/sign-up pages + header auth UI working, 1 user registered |
+| Supabase PostgreSQL | ✅ Live | Schema deployed, 17 products seeded, RLS policies, DB functions |
+| Supabase Auth | ✅ Live | Custom auth pages, admin user created (codedcrystal@gmail.com), password: MPadmin2024! |
+| Supabase Storage | ✅ Live | product-images bucket with public read policy |
 | Vercel Hosting | ✅ Live | mypleasure.vercel.app |
-| Vercel Blob | ✅ Ready | mypleasure-images store (Frankfurt), token configured |
 | Inventory System | ✅ Live | Auto-decrement on purchase, OOS display, qty caps, checkout validation |
 | Paystack | ❌ Not configured | Need test keys from dashboard.paystack.com |
 | Resend | ❌ Not configured | Need API key from resend.com |
+| ~~Neon PostgreSQL~~ | ❌ Replaced | Migrated to Supabase (2026-03-28) |
+| ~~Clerk Auth~~ | ❌ Replaced | Migrated to Supabase Auth (2026-03-28) |
+| ~~Vercel Blob~~ | ❌ Replaced | Migrated to Supabase Storage (2026-03-28) |
 
 ## Active Files (updated)
 | Path | What |
 |------|------|
-| app/sign-in/[[...sign-in]]/page.tsx | Clerk sign-in page |
-| app/sign-up/[[...sign-up]]/page.tsx | Clerk sign-up page |
-| components/layout/Header.tsx | Customer header with auth (Sign In icon / Clerk UserButton) |
+| app/sign-in/[[...sign-in]]/page.tsx | Supabase sign-in page |
+| app/sign-up/[[...sign-up]]/page.tsx | Supabase sign-up page |
+| app/forgot-password/page.tsx | Password reset request page |
+| app/reset-password/page.tsx | Set new password page |
+| app/account/layout.tsx | Customer account layout with sidebar nav |
+| app/account/page.tsx | Customer order history |
+| app/account/profile/page.tsx | Customer profile editor |
+| components/layout/Header.tsx | Customer header with Supabase auth state + user dropdown |
 | components/layout/MobileMenu.tsx | Mobile menu with Account section (Sign In / Sign Out) |
+| middleware.ts | Supabase session refresh + admin/account route protection |
 | components/products/ProductCard.tsx | Product card with out-of-stock overlay + disabled button |
 | app/product/[slug]/ProductActions.tsx | Product detail actions with stock-aware qty selector + OOS alert |
 | store/cart.ts | Zustand cart with stock-capped addItem/updateQuantity |
@@ -175,6 +188,8 @@
 | app/api/requests/route.ts | Public POST for product requests + admin email notification |
 | app/api/admin/requests/route.ts | Admin GET (list/filter) + PUT (status/notes update) |
 | app/admin/requests/page.tsx | Admin requests management with inline detail panel |
+
+| 2026-03-28 | **Major Migration: Neon + Clerk + Vercel Blob → Supabase** — Consolidated 3 services into 1. Rewrote 28+ files: all API routes (Neon SQL → Supabase query builder), auth (Clerk → Supabase Auth with custom pages), storage (Vercel Blob → Supabase Storage), middleware, Header, MobileMenu, admin layout. Created forgot-password, reset-password, and customer account pages. Build passes, 17 products seeded, admin user created, Vercel env vars updated. |
 
 → Full decision log: docs/DECISIONS.md
 → Full glossary: memory/glossary.md

@@ -105,4 +105,22 @@ Architecture Decision Records (ADRs) for the MP Wellness e-commerce platform.
 | 2026-03-26 | Fix Vercel deploy (peer deps) | Done | .npmrc + install command override |
 | 2026-03-26 | Fix Vercel deploy (Resend crash) | Done | Lazy-init pattern |
 | 2026-03-26 | Site live on Vercel | Done | mypleasure.vercel.app |
-| 2026-03-26 | Migrate Supabase → Neon + Clerk | In Progress | Database + auth swap |
+| 2026-03-26 | Migrate Supabase → Neon + Clerk | Done | Database + auth swap |
+| 2026-03-28 | Migrate Neon + Clerk + Blob → Supabase | Done | Consolidated 3 services into 1 |
+
+---
+
+## ADR-011: Migrate Neon + Clerk + Vercel Blob to Supabase
+**Date:** 2026-03-28
+**Status:** Accepted
+**Context:** Running three separate services (Neon PostgreSQL, Clerk Auth, Vercel Blob Storage) adds complexity, cost, and multiple failure points. Supabase provides all three (Postgres + Auth + Storage) in one unified platform with a generous free tier.
+**Decision:** Consolidate all three services into Supabase. Use Supabase PostgreSQL for database, Supabase Auth for authentication, and Supabase Storage for product images.
+**Implementation:**
+- Created 4 Supabase client helpers: browser, server, admin (service role), middleware
+- Rewrote all 14 API routes from Neon SQL template tags to Supabase query builder
+- Built custom auth pages (sign-in, sign-up, forgot-password, reset-password) replacing Clerk components
+- Created customer account pages (order history, profile)
+- Migrated upload API from Vercel Blob to Supabase Storage (product-images bucket)
+- Admin auth via email match in middleware (ADMIN_EMAIL env var)
+- RLS policies for all tables, DB functions (decrement_stock, get_weekly_revenue)
+**Consequences:** Simpler architecture (1 service vs 3), lower cost, unified dashboard, but requires custom auth UI instead of Clerk's pre-built components.
